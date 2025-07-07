@@ -1,0 +1,129 @@
+cmake_minimum_required(VERSION 3.22)
+
+# 项目基本设置
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS ON)
+
+# 构建类型设置
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
+# 项目名称设置
+set(CMAKE_PROJECT_NAME gd_timer_test)
+
+# 包含工具链配置
+include("cmake/gcc-arm-none-eabi.cmake")
+
+# 启用编译命令导出（用于clangd等工具）
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
+# 核心项目设置
+project(${CMAKE_PROJECT_NAME})
+message("构建类型: " ${CMAKE_BUILD_TYPE})
+
+# 启用C和汇编语言支持
+enable_language(C ASM)
+
+# 创建可执行文件目标
+add_executable(${CMAKE_PROJECT_NAME})
+
+# 添加GD32F4xx固件库
+add_subdirectory(cmake/gd32f4xx)
+
+# 添加应用层源文件
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    # # 主程序文件
+    # source/App/src/main.c
+    # source/App/src/gd32f4xx_it.c
+    # source/App/src/systick.c
+    
+    # # 应用层文件
+    # source/App/adc_app.c
+    # source/App/btn_app.c
+    # source/App/led_app.c
+    # source/App/oled_app.c
+    # source/App/rtc_app.c
+    # source/App/scheduler.c
+    # source/App/sd_app.c
+    # source/App/usart_app.c
+)
+
+# 添加组件源文件
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    # # BSP组件
+    # source/Components/bsp/mcu_cmic_gd32f470vet6.c
+    
+    # # EBTN组件
+    # source/Components/ebtn/ebtn.c
+    
+    # # OLED组件
+    # source/Components/oled/oled.c
+    
+    # # GD25QXX Flash组件
+    # source/Components/gd25qxx/gd25qxx.c
+    # source/Components/gd25qxx/gd25qxx_dma.c
+    # source/Components/gd25qxx/lfs.c
+    # source/Components/gd25qxx/lfs_util.c
+    # source/Components/gd25qxx/lfs_port.c
+    
+    # # SDIO组件
+    # source/Components/sdio/sdio_sdcard.c
+    
+    # # FatFS组件
+    # source/Components/fatfs/ff.c
+    # source/Components/fatfs/diskio.c
+    # source/Components/fatfs/unicode.c
+    
+    # 性能计数器组件 (暂时注释掉，避免CMSIS冲突)
+    # source/Components/perf_counter-CMSIS-Pack/perf_counter.c
+    # source/Components/perf_counter-CMSIS-Pack/perfc_port_default.c
+)
+
+# 添加包含目录
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+    # # 应用层头文件
+    # source/App
+    # source/App/inc
+    
+    # # 组件头文件
+    # source/Components/bsp
+    # source/Components/ebtn
+    # source/Components/oled
+    # source/Components/gd25qxx
+    # source/Components/sdio
+    # source/Components/fatfs
+    # # source/Components/perf_counter-CMSIS-Pack (暂时注释掉)
+)
+
+# 添加编译宏定义
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
+    # GD32F470VET6芯片定义
+    GD32F470
+    GD32F4XX
+    
+    # 调试模式定义
+    $<$<CONFIG:Debug>:DEBUG>
+    $<$<CONFIG:Debug>:USE_FULL_ASSERT>
+)
+
+# 链接库
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
+    gd32f4xx_firmware
+    m  # 数学库
+)
+
+# 设置链接器属性
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+    SUFFIX ".elf"
+    ADDITIONAL_CLEAN_FILES "${CMAKE_PROJECT_NAME}.map"
+)
+
+# 添加后处理命令生成bin和hex文件
+add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_PROJECT_NAME}.bin
+    COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_PROJECT_NAME}.hex
+    COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
+    COMMENT "生成二进制和HEX文件，显示内存使用情况"
+)

@@ -1,0 +1,82 @@
+# GD32F4xx固件库CMake配置
+cmake_minimum_required(VERSION 3.22)
+
+# 启用C和汇编语言支持
+enable_language(C ASM)
+
+# GD32F4xx编译宏定义
+set(GD32F4xx_Defines_Syms 
+    GD32F470
+    GD32F4XX
+    USE_STDPERIPH_DRIVER
+    $<$<CONFIG:Debug>:DEBUG>
+)
+
+# GD32F4xx包含目录
+set(GD32F4xx_Include_Dirs
+    ${CMAKE_SOURCE_DIR}/code/Driver/cmsis/GD/GD32F4xx/Include
+    ${CMAKE_SOURCE_DIR}/code/Driver/cmsis
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Include
+)
+
+# GD32F4xx固件库源文件
+set(GD32F4xx_Firmware_Src
+    # 系统文件
+    ${CMAKE_SOURCE_DIR}/code/Driver/cmsis/GD/GD32F4xx/Source/system_gd32f4xx.c
+    
+    # 启动文件
+    ${CMAKE_SOURCE_DIR}/code/Driver/startup_gd32f450_470.s
+
+    # 固件库源文件
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_adc.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_can.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_crc.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_ctc.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_dac.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_dbg.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_dci.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_dma.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_enet.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_exmc.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_exti.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_fmc.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_fwdgt.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_gpio.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_i2c.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_ipa.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_iref.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_misc.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_pmu.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_rcu.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_rtc.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_sdio.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_spi.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_syscfg.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_timer.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_tli.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_trng.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_usart.c
+    ${CMAKE_SOURCE_DIR}/code/Driver/library/Source/gd32f4xx_wwdgt.c
+)# 创建GD32F4xx固件库接口库
+add_library(gd32f4xx_interface INTERFACE)
+target_include_directories(gd32f4xx_interface INTERFACE ${GD32F4xx_Include_Dirs})
+target_compile_definitions(gd32f4xx_interface INTERFACE ${GD32F4xx_Defines_Syms})
+
+# 创建GD32F4xx固件库静态库
+add_library(gd32f4xx_firmware OBJECT)
+target_sources(gd32f4xx_firmware PRIVATE ${GD32F4xx_Firmware_Src})
+target_link_libraries(gd32f4xx_firmware PUBLIC gd32f4xx_interface)
+
+# 链接固件库到主项目（不重复添加源文件）
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gd32f4xx_interface)
+
+# 添加包含目录到主项目
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GD32F4xx_Include_Dirs})
+
+# 添加编译定义到主项目
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ${GD32F4xx_Defines_Syms})
+
+# 验证C标准兼容性
+if((CMAKE_C_STANDARD EQUAL 90) OR (CMAKE_C_STANDARD EQUAL 99))
+    message(FATAL_ERROR "生成的代码需要C11或更高版本")
+endif()
