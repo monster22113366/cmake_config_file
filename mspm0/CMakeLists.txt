@@ -11,7 +11,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # 项目名称设置
-set(CMAKE_PROJECT_NAME mspm0_usart_test)
+set(CMAKE_PROJECT_NAME mspm0_usart_test) 
 
 # 包含工具链配置
 include("cmake/gcc-arm-none-eabi.cmake")
